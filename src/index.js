@@ -68,6 +68,8 @@ export default class Mailman {
     if(!message || !route) {
       debug('notification rejected, reason: missing arguments');
       return Promise.reject();
+    } else if (message instanceof Object) {
+      message = JSON.stringify(message);
     }
     debug('notify: ', message, route, options);
     options.timestamp = new Date().getTime();
@@ -76,6 +78,7 @@ export default class Mailman {
         this.channels[name].publish(name, route, new Buffer(message), options);
         this.channels[name].waitForConfirms()
         .then(() => {
+          debug('message confirmed');
           return resolve(true);
         })
         .catch(error => {
