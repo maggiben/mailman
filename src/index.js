@@ -1,49 +1,65 @@
-//var config = require('config');
-//var amqp = require('amqplib');
+import Debug from 'debug';
 import config from 'config';
 import amqp from 'amqplib';
+
+const debug = Debug('notification:');
 
 export default class Mailman {
 
   constructor() {
-    amqp.connect(config.get('amqp.url')).then(this.onConnect).catch(this.onError);
+    return new Promise((resolve, reject) => {
+      amqp.connect(config.get('amqp.url')).then(connection => {
+        debug('amqp connection ready');
+        this.connection = connection;
+        this.onConnect(connection).then(channels => {
+          return resolve(this);
+        });
+      }).catch(error => {
+        debug('error: ', error);
+        return reject(error);
+      });
+    });
   }
 
   onConnect(connection) {
-    this.connection = connection;
-    Promise.all([this.getChannel('notification')]).then(subscribers => {
-      console.log('subscribers: ', subscribers);
-    }).catch(this.onError);
+    return new Promise((resolve, reject) => {
+      Promise.all([this.getChannel('notification')]).then(channels => {
+        this.channels = channels;
+        return resolve(channels);
+      }).catch(error => {
+        debug('error: ', error);
+        return reject(error);
+      });
+    });
   }
 
-  onError(error) {
-    console.log(error);
-  }
-
-  notify() {
-
+  notify(message) {
+    debug('notify: ', message);
+    return this.channels[0].publish('notification', 'email.user', new Buffer(message));
   }
 
   getChannel(name) {
     let exchanges = config.get('amqp.exchanges');
     return new Promise((resolve, reject) => {
-      connection.createChannel().then(channel => {
-        //channel.assertExchange(name, 'topic', exchanges[name])
-        channel.assertExchange(name, 'topic', {
-          durable: true
-        })
+      this.connection.createChannel()
+      .then(channel => {
+        debug('amqp channel open');
+        let options = exchanges[name];
+        channel.assertExchange(name, 'topic', options)
         .then(() => {
+          debug('amqp exchange open');
           this.channel = channel;
           return resolve(channel);
         })
-        .catch(reject);
+        .catch(error => {
+          debug('error: ', error);
+          return reject(error);
+        });
       })
-      .catch(reject);
+      .catch(error => {
+        debug('error: ', error);
+        return reject(error);
+      });
     });
-  }
-
-  percent({percent = 100, amount}) {
-    const percentOff = (percent / 100) * amount;
-    return percentOff;
   }
 }
