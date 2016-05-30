@@ -1,0 +1,69 @@
+{
+  "service": {
+    "notification": {
+      "protocol": "https",
+      "host": "dev.citizen.co",
+      "pathname": "/service/notification"
+    }
+  },
+  "logger": {
+    "graylog": {
+      "host": "54.165.251.47",
+      "port": 12202
+    },
+    "folder": "/var/log/node",
+    "files": {
+      "node": "node.log",
+      "access": "access.log"
+    }
+  },
+  "amqp": {
+    "url": "amqp://admin:Citizen2015@54.152.225.121:5672",
+    "exchanges": {
+      "notification": {
+        "type": "topic",
+        "durable": true,
+        "autoDelete": false,
+        "confirm": true,
+        "topics": {
+          "email": {
+            "durable": true,
+            "autoDelete": false,
+            "routes": [{
+              "pattern": "email.*",
+              "ack": true,
+              "durable": true,
+              "autoDelete": false,
+              "prefetchCount": 10,
+              "routingKeyInPayload": true
+            }]
+          },
+          "sms": {
+            "durable": true,
+            "autoDelete": false,
+            "routes": [{
+              "pattern": "sms.*",
+              "ack": true,
+              "durable": true,
+              "autoDelete": false,
+              "prefetchCount": 10,
+              "routingKeyInPayload": true
+            }]
+          },
+          "socket": {
+            "durable": true,
+            "autoDelete": false,
+            "routes": [{
+              "pattern": "socket.*",
+              "ack": true,
+              "durable": true,
+              "autoDelete": false,
+              "prefetchCount": 10,
+              "routingKeyInPayload": true
+            }]
+          }
+        }
+      }
+    }
+  }
+}
