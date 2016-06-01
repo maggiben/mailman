@@ -43,7 +43,7 @@ export default class Mailman {
   /**
    * AMQP on connection handler.
    * @param {object} connection - the connection object.
-   * @constructor
+   * @returns {promise} amqp channels
    */
   onConnect(connection) {
     return new Promise((resolve, reject) => {
@@ -62,6 +62,7 @@ export default class Mailman {
    * @param {any} message - the message to be sent.
    * @param {string} route - the queue routing key.
    * @param {object} options - delivery options.
+   * @returns {promise} confirmation
    */
   notify(message, route, options = {}) {
     if(!message || !route) {
@@ -92,6 +93,7 @@ export default class Mailman {
   /**
    * Channel factory.
    * @param {string} name - exchange name.
+   * @returns {promise} channel
    */
   getChannel(name) {
     return new Promise((resolve, reject) => {
